@@ -1,0 +1,4 @@
+Wesomender
+==========
+
+Hybrid news recommender
