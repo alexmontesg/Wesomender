@@ -1,5 +1,7 @@
 package es.weso.amg.recommender.model;
 
+import java.util.Arrays;
+
 public class Article {
 
 	private Media source;
@@ -71,5 +73,22 @@ public class Article {
 
 	public void setText(String text) {
 		this.text = text;
+	}
+
+	@Override
+	public String toString() {
+		return "Article [source=" + source + ", lat=" + lat + ", lon=" + lon
+				+ ", entities=" + Arrays.toString(entities) + ", headline="
+				+ headline + ", text=" + text + ", timestamp=" + timestamp
+				+ ", item_id=" + item_id + "]";
+	}
+
+	public boolean hasEntity(String entity) {
+		for (String e : entities) {
+			if (e.equalsIgnoreCase(entity)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

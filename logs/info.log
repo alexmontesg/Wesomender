@@ -1,0 +1,18 @@
+2013-04-02 12:37:27  INFO evaluator.Evaluator - Removing old recommenders
+2013-04-02 12:37:27  INFO evaluator.AbstractEvaluator - Building object of type: class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 12:37:27  INFO evaluator.AbstractEvaluator - Running evaluation for the class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 12:38:10  INFO evaluator.Evaluator - Removing old recommenders
+2013-04-02 12:38:10  INFO evaluator.AbstractEvaluator - Building object of type: class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 12:38:10  INFO evaluator.AbstractEvaluator - Running evaluation for the class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 12:39:26  INFO evaluator.Evaluator - Removing old recommenders
+2013-04-02 12:39:33  INFO evaluator.AbstractEvaluator - Building object of type: class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 12:39:37  INFO evaluator.AbstractEvaluator - Running evaluation for the class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 13:56:10  INFO evaluator.Evaluator - Removing old recommenders
+2013-04-02 13:56:10  INFO evaluator.AbstractEvaluator - Building object of type: class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 13:56:10  INFO evaluator.AbstractEvaluator - Running evaluation for the class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 13:56:10  INFO evaluator.AbstractEvaluator - TreeClustering evaluation with 50 clusters and FarthestNeighborClusterSimilarity(CityBlockSimilarity) similarity finished successfully with an score of NaN
+2013-04-02 13:56:10  INFO evaluator.AbstractEvaluator - TreeClustering evaluation with 50 clusters and FarthestNeighborClusterSimilarity(TanimotoCoefficientSimilarity) similarity finished successfully with an score of NaN
+2013-04-02 13:57:30  INFO evaluator.Evaluator - Removing old recommenders
+2013-04-02 13:57:30  INFO evaluator.AbstractEvaluator - Building object of type: class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 13:57:30  INFO evaluator.AbstractEvaluator - Running evaluation for the class es.weso.amg.recommender.evaluator.TreeClusteringEvaluator
+2013-04-02 13:57:43  INFO evaluator.AbstractEvaluator - TreeClustering evaluation with 50 clusters and FarthestNeighborClusterSimilarity(TanimotoCoefficientSimilarity) similarity finished successfully with an score of NaN

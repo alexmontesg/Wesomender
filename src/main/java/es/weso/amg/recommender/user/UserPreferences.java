@@ -17,9 +17,9 @@ import org.apache.mahout.cf.taste.impl.model.mongodb.MongoDBDataModel;
 import org.apache.mahout.cf.taste.recommender.RecommendedItem;
 import org.apache.mahout.cf.taste.recommender.Recommender;
 
-import es.weso.amg.recommender.model.Movie;
+import es.weso.amg.recommender.model.Article;
 import es.weso.amg.recommender.model.Rating;
-import es.weso.amg.recommender.persistence.MovieDAO;
+import es.weso.amg.recommender.persistence.ArticleDAO;
 import es.weso.amg.recommender.persistence.RatingDAO;
 import es.weso.amg.recommender.util.ValueComparatorDesc;
 
@@ -28,8 +28,9 @@ public class UserPreferences {
 	private String user_id;
 	private MongoDBDataModel model;
 	private Recommender recommender;
-	private MovieDAO mdao;
+	private ArticleDAO adao;
 	private RatingDAO rdao;
+	private double lat, lon;
 
 	private static final Comparator<Rating> TIME_ORDER = new Comparator<Rating>() {
 		public int compare(Rating r1, Rating r2) {
@@ -45,8 +46,10 @@ public class UserPreferences {
 		this.user_id = user_id;
 		this.model = model;
 		this.recommender = recommender;
-		mdao = new MovieDAO();
 		rdao = new RatingDAO();
+		adao = new ArticleDAO();
+		lat = 43.546402;
+		lon = -5.662894;
 	}
 
 	public Collection<Rating> getPreferences(double collaborativeFiltering,
@@ -66,13 +69,13 @@ public class UserPreferences {
 		Map<String, Double> genres = getMostValuedGenres(ratings,
 				model.getMaxPreference() / 2);
 		double contentBased = 1 - collaborativeFiltering;
-		Collection<Long> unratedMovies = getUnratedMovies();
+		Collection<Long> unratedArticles = getUnratedArticles();
 
 		Collection<Rating> estimatedRatings = new ArrayDeque<Rating>(
-				unratedMovies.size());
+				unratedArticles.size());
 		long long_user_id = Long.parseLong(model.fromIdToLong(user_id, true));
 		Collection<String> haveCollaborativeScore = getHybridPreferences(
-				collaborativeFiltering, genres, contentBased, unratedMovies,
+				collaborativeFiltering, genres, contentBased, unratedArticles,
 				estimatedRatings, long_user_id);
 
 		getContentBasedPreferences(genres, contentBased, estimatedRatings,
@@ -83,11 +86,11 @@ public class UserPreferences {
 
 	protected Collection<String> getHybridPreferences(
 			double collaborativeFiltering, Map<String, Double> genres,
-			double contentBased, Collection<Long> unratedMovies,
+			double contentBased, Collection<Long> unratedArticles,
 			Collection<Rating> estimatedRatings, long long_user_id)
 			throws TasteException {
 		List<RecommendedItem> recommendedItems = recommender.recommend(
-				long_user_id, unratedMovies.size());
+				long_user_id, unratedArticles.size());
 		Collection<String> haveCollaborativeScore = new ArrayDeque<String>(
 				recommendedItems.size());
 		for (RecommendedItem item : recommendedItems) {
@@ -96,7 +99,7 @@ public class UserPreferences {
 			haveCollaborativeScore.add(item_id);
 			double score = collaborativeFiltering * collaborativeScore
 					+ contentBased
-					* getContentBasedRating(genres, mdao.getMovie(item_id));
+					* getContentBasedRating(genres, adao.getArticle(item_id));
 			estimatedRatings.add(new Rating(user_id, item_id, score, System
 					.currentTimeMillis()));
 		}
@@ -113,45 +116,69 @@ public class UserPreferences {
 			haveCollaborativeScore.add(model.fromLongToId(iter.next()));
 		}
 
-		Collection<Movie> dontHaveCollaborativeScore = mdao
-				.getMoviesNotIn(haveCollaborativeScore);
+		Collection<Article> dontHaveCollaborativeScore = adao
+				.getArticlesNotIn(haveCollaborativeScore);
 
-		for (Movie movie : dontHaveCollaborativeScore) {
-			double score = contentBased * getContentBasedRating(genres, movie);
-			estimatedRatings.add(new Rating(user_id, movie.getItem_id(), score,
-					System.currentTimeMillis()));
+		for (Article article : dontHaveCollaborativeScore) {
+			double score = contentBased
+					* getContentBasedRating(genres, article);
+			estimatedRatings.add(new Rating(user_id, article.getItem_id(),
+					score, System.currentTimeMillis()));
 		}
 	}
 
-	private double getContentBasedRating(Map<String, Double> valuedGenres,
-			Movie movie) {
+	private double getContentBasedRating(Map<String, Double> valuedEntities,
+			Article article) {
 		double score = 0.0;
-		for (Map.Entry<String, Double> entry : valuedGenres.entrySet()) {
-			if (movie.isOfGenre(entry.getKey())) {
+		for (Map.Entry<String, Double> entry : valuedEntities.entrySet()) {
+			if (article.hasEntity(entry.getKey())) {
 				score += entry.getValue() / 100;
 			}
 		}
-		double timeScore = 1.0
-				- (System.currentTimeMillis() - movie.getCreated_at())
+		score += 1.0 - (System.currentTimeMillis() - article.getTimestamp())
 				/ (double) System.currentTimeMillis();
-		score *= timeScore;
+		double maxDistance = 20037.58;
+		double distance = calculateDistance(lat, lon, article.getLat(),
+				article.getLon());
+		score += (maxDistance - distance) / maxDistance;
+		score += article.getSource().getTrustworthiness();
+		score /= 4;
 		return score;
 	}
 
-	private Collection<Long> getUnratedMovies() {
+	private double calculateDistance(double lon1, double lat1, double lon2,
+			double lat2) {
+
+		lat1 = Math.toRadians(lat1);
+		lat2 = Math.toRadians(lat2);
+
+		double dlon = (Math.toRadians(lon2) - Math.toRadians(lon1));
+		double dlat = (lat2 - lat1);
+
+		double sinlat = Math.pow(Math.sin(dlat / 2), 2);
+		double sinlon = Math.pow(Math.sin(dlon / 2), 2);
+
+		double a = sinlat + Math.cos(lat1) * Math.cos(lat2) * sinlon;
+		return 12742 * Math.asin(Math.min(1.0, Math.sqrt(a)));
+
+	}
+
+	private Collection<Long> getUnratedArticles() {
 		Collection<Rating> ratings = rdao.getRatingsFromUser(user_id);
-		Collection<String> ratedMovies = new ArrayDeque<String>(ratings.size());
+		Collection<String> ratedArticles = new ArrayDeque<String>(
+				ratings.size());
 		for (Rating rating : ratings) {
-			ratedMovies.add(rating.getItem_id());
+			ratedArticles.add(rating.getItem_id());
 		}
-		Collection<Movie> unratedMovies = mdao.getMoviesNotIn(ratedMovies);
-		Collection<Long> unratedMoviesIds = new ArrayDeque<Long>(
-				unratedMovies.size());
-		for (Movie movie : unratedMovies) {
-			unratedMoviesIds.add(Long.parseLong(model.fromIdToLong(
-					movie.getItem_id(), false)));
+		Collection<Article> unratedArticles = adao
+				.getArticlesNotIn(ratedArticles);
+		Collection<Long> unratedArticlesIDs = new ArrayDeque<Long>(
+				unratedArticles.size());
+		for (Article article : unratedArticles) {
+			unratedArticlesIDs.add(Long.parseLong(model.fromIdToLong(
+					article.getItem_id(), false)));
 		}
-		return unratedMoviesIds;
+		return unratedArticlesIDs;
 	}
 
 	public Collection<Rating> getMostRecent(int n) throws TasteException {
@@ -180,27 +207,27 @@ public class UserPreferences {
 
 	public Map<String, Double> getMostValuedGenres(Collection<Rating> ratings,
 			double minScore) {
-		Map<String, Double> genres = new HashMap<String, Double>();
-		MovieDAO mdao = new MovieDAO();
+		Map<String, Double> entities = new HashMap<String, Double>();
+		ArticleDAO adao = new ArticleDAO();
 		double totalScore = 0.0;
 		for (Rating rating : ratings) {
 			if (rating.getScore() >= minScore) {
-				Movie movie = mdao.getMovie(rating.getItem_id());
-				totalScore += rating.getScore() * movie.getGenres().length;
-				addGenres(genres, movie, rating);
+				Article article = adao.getArticle(rating.getItem_id());
+				totalScore += rating.getScore() * article.getEntities().length;
+				addGenres(entities, article, rating);
 			}
 		}
-		normalizeMap(genres, totalScore);
-		return orderMap(genres);
+		normalizeMap(entities, totalScore);
+		return orderMap(entities);
 	}
 
-	private void addGenres(Map<String, Double> genres, Movie movie,
+	private void addGenres(Map<String, Double> entities, Article article,
 			Rating rating) {
-		for (String genre : movie.getGenres()) {
-			if (genres.containsKey(genre)) {
-				genres.put(genre, genres.get(genre) + rating.getScore());
+		for (String entity : article.getEntities()) {
+			if (entities.containsKey(entity)) {
+				entities.put(entity, entities.get(entity) + rating.getScore());
 			} else {
-				genres.put(genre, rating.getScore());
+				entities.put(entity, rating.getScore());
 			}
 		}
 	}
