@@ -201,7 +201,6 @@ public class Evaluator {
 		String[] beans = getEvaluatorsNames(pack);
 		for (String bean : beans) {
 			if (!bean.contains(".")) { // Delete spring classes
-				if(bean.toLowerCase().contains("treec"))
 				addEvaluator(evaluators, getFullyQualifiedName(pack, bean));
 			}
 		}

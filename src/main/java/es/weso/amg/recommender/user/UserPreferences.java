@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.mahout.cf.taste.common.NoSuchUserException;
 import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.LongPrimitiveIterator;
 import org.apache.mahout.cf.taste.impl.model.mongodb.MongoDBDataModel;
@@ -42,14 +43,14 @@ public class UserPreferences {
 	};
 
 	public UserPreferences(String user_id, MongoDBDataModel model,
-			Recommender recommender) {
+			Recommender recommender, double lat, double lon) {
 		this.user_id = user_id;
 		this.model = model;
 		this.recommender = recommender;
 		rdao = new RatingDAO();
 		adao = new ArticleDAO();
-		lat = 43.546402;
-		lon = -5.662894;
+		this.lat = lat;
+		this.lon = lon;
 	}
 
 	public Collection<Rating> getPreferences(double collaborativeFiltering,
@@ -135,14 +136,14 @@ public class UserPreferences {
 				score += entry.getValue() / 100;
 			}
 		}
-		score += 1.0 - (System.currentTimeMillis() - article.getTimestamp())
-				/ (double) System.currentTimeMillis();
+		score *= 0.15;
+		score += 0.5 * (1.0 - (System.currentTimeMillis() - article.getTimestamp())
+				/ (double) System.currentTimeMillis());
 		double maxDistance = 20037.58;
 		double distance = calculateDistance(lat, lon, article.getLat(),
 				article.getLon());
-		score += (maxDistance - distance) / maxDistance;
-		score += article.getSource().getTrustworthiness();
-		score /= 4;
+		score += 0.2 * ((maxDistance - distance) / maxDistance);
+		score += 0.15 * article.getSource().getTrustworthiness();
 		return score;
 	}
 
@@ -247,14 +248,18 @@ public class UserPreferences {
 	}
 
 	private List<Rating> getRatings() throws TasteException {
-		int uid = Integer.parseInt(model.fromIdToLong(user_id, true));
-		LongPrimitiveIterator i = model.getItemIDsFromUser(uid).iterator();
 		List<Rating> ratings = new LinkedList<Rating>();
-		RatingDAO rdao = new RatingDAO();
-		while (i.hasNext()) {
-			ratings.add(rdao.getRating(user_id, model.fromLongToId(i.next())));
+		try {
+			int uid = Integer.parseInt(model.fromIdToLong(user_id, true));
+			LongPrimitiveIterator i = model.getItemIDsFromUser(uid).iterator();
+			RatingDAO rdao = new RatingDAO();
+			while (i.hasNext()) {
+				ratings.add(rdao.getRating(user_id, model.fromLongToId(i.next())));
+			}
+			Collections.sort(ratings, TIME_ORDER);
+		} catch (NoSuchUserException e) {
+			
 		}
-		Collections.sort(ratings, TIME_ORDER);
 		return ratings;
 	}
 

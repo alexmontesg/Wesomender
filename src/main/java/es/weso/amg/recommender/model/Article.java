@@ -1,13 +1,13 @@
 package es.weso.amg.recommender.model;
 
-import java.util.Arrays;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 
+@JsonAutoDetect
 public class Article {
 
 	private Media source;
 	private double lat, lon;
 	private String[] entities;
-	private String headline, text;
 	private long timestamp;
 	private String item_id;
 
@@ -57,30 +57,6 @@ public class Article {
 
 	public void setItem_id(String item_id) {
 		this.item_id = item_id;
-	}
-
-	public String getHeadline() {
-		return headline;
-	}
-
-	public void setHeadline(String headline) {
-		this.headline = headline;
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public void setText(String text) {
-		this.text = text;
-	}
-
-	@Override
-	public String toString() {
-		return "Article [source=" + source + ", lat=" + lat + ", lon=" + lon
-				+ ", entities=" + Arrays.toString(entities) + ", headline="
-				+ headline + ", text=" + text + ", timestamp=" + timestamp
-				+ ", item_id=" + item_id + "]";
 	}
 
 	public boolean hasEntity(String entity) {

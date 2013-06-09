@@ -1,5 +1,8 @@
 package es.weso.amg.recommender.model;
 
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+
+@JsonAutoDetect
 public class Media {
 	private String name;
 	private double trustworthiness;
